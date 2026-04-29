@@ -1,0 +1,16 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+data/
+outputs/
+patches/
+temporal_patches/
+
+*.tif
+*.joblib
+*.pth
+*.npy
+
+.DS_Store

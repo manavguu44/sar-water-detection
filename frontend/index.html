@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SAR Water Detection Dashboard</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f766e, #0f172a);
+      color: white;
+      padding: 22px 30px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: #d1fae5;
+    }
+
+    .panel {
+      background: white;
+      margin: 18px;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    select, button {
+      padding: 11px 14px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button {
+      background: #0f766e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #115e59;
+    }
+
+    #map {
+      height: 460px;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ccfbf1;
+      color: #115e59;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .metric-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .metric-card h3 {
+      margin: 0 0 10px;
+      color: #0f766e;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0;
+      font-size: 15px;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      margin-top: 12px;
+    }
+
+    .legend {
+      background: white;
+      padding: 8px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      font-size: 13px;
+    }
+
+    .blue-box {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background: rgba(0,120,255,0.6);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>SAR Water Detection Dashboard</h1>
+    <p>Sentinel-1 SAR + Random Forest + UNet + Temporal UNet</p>
+  </header>
+
+  <div class="panel">
+    <div class="controls">
+      <label><b>Select AOI:</b></label>
+
+      <select id="aoiSelect" onchange="changeAOI()">
+        <option value="delhi">Delhi</option>
+        <option value="mumbai">Mumbai</option>
+      </select>
+
+      <button onclick="runInference()">Run Inference</button>
+      <button onclick="showOverlay()">Show Map Overlay</button>
+      <button onclick="showMetrics()">Show Metrics</button>
+      <button onclick="showFinalComparison()">Final Comparison</button>
+      <button onclick="clearResult()">Clear</button>
+
+      <span class="badge" id="status">Ready</span>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Metrics</h2>
+    <div class="metrics-grid" id="metricsBox">
+      <p>No metrics loaded yet.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Model Output</h2>
+    <img id="resultImage" />
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const aois = {
+      delhi: {
+        name: "Delhi",
+        center: [28.55, 77.15],
+        zoom: 10,
+        bounds: [[28.4, 77.0], [28.7, 77.3]]
+      },
+      mumbai: {
+        name: "Mumbai",
+        center: [19.05, 72.87],
+        zoom: 11,
+        bounds: [[18.85, 72.75], [19.2, 73.05]]
+      }
+    };
+
+    const map = L.map("map").setView(aois.delhi.center, aois.delhi.zoom);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    let rectangle = L.rectangle(aois.delhi.bounds, {
+      color: "#ef4444",
+      weight: 2,
+      fillOpacity: 0.08
+    }).addTo(map);
+
+    let overlayLayer = null;
+
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "legend");
+      div.innerHTML = '<span class="blue-box"></span> Predicted Water';
+      return div;
+    };
+    legend.addTo(map);
+
+    function selectedAOI() {
+      return document.getElementById("aoiSelect").value;
+    }
+
+    function changeAOI() {
+      const selected = selectedAOI();
+      const aoi = aois[selected];
+
+      map.setView(aoi.center, aoi.zoom);
+
+      if (rectangle) {
+        map.removeLayer(rectangle);
+      }
+
+      if (overlayLayer) {
+        map.removeLayer(overlayLayer);
+        overlayLayer = null;
+      }
+
+      rectangle = L.rectangle(aoi.bounds, {
+        color: "#ef4444",
+        weight: 2,
+        fillOpacity: 0.08
+      }).addTo(map);
+
+      document.getElementById("status").innerText = aoi.name + " selected";
+      document.getElementById("resultImage").src = "";
+      document.getElementById("metricsBox").innerHTML = "<p>No metrics loaded yet.</p>";
+    }
+
+    function runInference() {
+      const selected = selectedAOI();
+      const img = document.getElementById("resultImage");
+
+      document.getElementById("status").innerText = "Running inference...";
+
+      img.src = API_BASE + "/predict?aoi=" + selected + "&t=" + new Date().getTime();
+
+      img.onload = function () {
+        document.getElementById("status").innerText = "Inference complete (" + selected + ")";
+      };
+    }
+
+    function showFinalComparison() {
+      const selected = selectedAOI();
+      const img = document.getElementById("resultImage");
+
+      document.getElementById("status").innerText = "Loading comparison...";
+
+      img.src = API_BASE + "/final-comparison?aoi=" + selected + "&t=" + new Date().getTime();
+
+      img.onload = function () {
+        document.getElementById("status").innerText = "Comparison loaded (" + selected + ")";
+      };
+    }
+
+    function showOverlay() {
+      const selected = selectedAOI();
+      const aoi = aois[selected];
+
+      if (overlayLayer) {
+        map.removeLayer(overlayLayer);
+      }
+
+      overlayLayer = L.imageOverlay(
+        API_BASE + "/overlay?aoi=" + selected + "&t=" + new Date().getTime(),
+        aoi.bounds,
+        { opacity: 0.8 }
+      ).addTo(map);
+
+      map.fitBounds(aoi.bounds);
+      document.getElementById("status").innerText = "Map overlay loaded (" + selected + ")";
+    }
+
+    async function showMetrics() {
+      const selected = selectedAOI();
+      const box = document.getElementById("metricsBox");
+
+      document.getElementById("status").innerText = "Loading metrics...";
+
+      const response = await fetch(API_BASE + "/metrics?aoi=" + selected);
+      const data = await response.json();
+
+      box.innerHTML = `
+        <div class="metric-card">
+          <h3>Random Forest</h3>
+          <div class="metric-row"><span>F1</span><b>${data.random_forest.f1}</b></div>
+          <div class="metric-row"><span>IoU</span><b>${data.random_forest.iou}</b></div>
+        </div>
+
+        <div class="metric-card">
+          <h3>UNet VV+VH</h3>
+          <div class="metric-row"><span>F1</span><b>${data.unet_vv_vh.f1}</b></div>
+          <div class="metric-row"><span>IoU</span><b>${data.unet_vv_vh.iou}</b></div>
+        </div>
+
+        <div class="metric-card">
+          <h3>Temporal UNet</h3>
+          <div class="metric-row"><span>F1</span><b>${data.temporal_unet.f1}</b></div>
+          <div class="metric-row"><span>IoU</span><b>${data.temporal_unet.iou}</b></div>
+        </div>
+      `;
+
+      document.getElementById("status").innerText = "Metrics loaded (" + selected + ")";
+    }
+
+    function clearResult() {
+      document.getElementById("resultImage").src = "";
+      document.getElementById("metricsBox").innerHTML = "<p>No metrics loaded yet.</p>";
+
+      if (overlayLayer) {
+        map.removeLayer(overlayLayer);
+        overlayLayer = null;
+      }
+
+      document.getElementById("status").innerText = "Ready";
+    }
+  </script>
+</body>
+</html>
