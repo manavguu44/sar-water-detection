@@ -1,3 +1,5 @@
+## Learning SAR
+
 Synthetic Aperture Radar, or SAR, is fundamentally different from the optical imagery we see on platforms like Google Maps. While optical satellites act like high-powered cameras that rely on sunlight to capture a "picture," SAR is an active system. It carries its own energy source, beaming microwave pulses down to the surface and measuring the "echo" that bounces back. Because it doesn't rely on light, SAR can "see" in total darkness. More importantly, because microwaves can pass through the atmosphere regardless of weather, SAR can see through thick clouds, smoke, and rain—conditions that leave optical sensors completely blind. This makes it an indispensable tool for emergency response, where waiting for a clear, sunny day isn't an option.
 
 When we use SAR data for Machine Learning, we have to look past the "pixels" and consider the physics of the radar bounce. One of the most important concepts is polarization, usually labeled as VV or VH. This tells us the orientation of the radar wave. A VV signal is great for seeing the roughness of the ground or water, while a VH signal is essential for identifying complex structures like forests. In a forest, the radar waves bounce off many branches and leaves, "twisting" the signal's orientation before it returns to the satellite. This is why a U-Net model can be so effective; by looking at both channels, it can distinguish between a flat, smooth road (which looks dark) and a dense, messy forest (which looks bright).
@@ -7,6 +9,8 @@ However, SAR data isn't perfect "out of the box." It comes with a unique type of
 The real-world applications for this technology are incredibly impactful, particularly in flood mapping. Because smooth water acts like a mirror, it reflects the radar signal away from the satellite, making flooded areas appear as distinct black shapes in the data. Even in the middle of a hurricane, SAR can provide a clear map of where the water is. Beyond disasters, SAR is used for land-cover mapping to track deforestation in cloudy tropical regions and for monitoring "subsidence"—using the precision of radar to detect if a city or a bridge is sinking by just a few millimeters. By combining the structural intelligence of a U-Net with a deep understanding of these radar physics, we can build tools that monitor our changing planet more reliably than ever before.
 
 Synthetic Aperture Radar (SAR) data has been widely used with machine learning techniques for applications such as land-cover classification, water detection, flood mapping, and urban analysis. In this project, I explored both classical machine learning approaches and modern deep learning methods applied to SAR data in order to understand their strengths, limitations, and suitability for different tasks.
+
+## Exploring SAR ML models and picking a use case
 
 Classical machine learning methods rely on handcrafted features derived from SAR imagery. These include backscatter intensity, texture features such as those derived from gray-level co-occurrence matrices (GLCM), and polarization information such as VV and VH channels. These features are then used with models such as Random Forests and Support Vector Machines. Random Forest is widely used for SAR-based classification tasks due to its simplicity, robustness, and ability to perform well with limited data. However, it operates at the pixel level and does not capture spatial context. Support Vector Machines are also effective for classification tasks and perform well when the feature space is well defined, but they require careful feature engineering and do not scale easily to large datasets.
 
@@ -39,15 +43,17 @@ These preprocessing steps ensured that the data was consistent, normalized, and 
 - Clone the repository and open the project folder in VS Code
 - Create a virtual environment:
 
-```bash
 python -m venv .venv
 Activate the environment (Windows):
 
 .\.venv\Scripts\Activate.ps1
+
 Install required packages:
 
 python -m pip install rasterio numpy matplotlib scikit-learn joblib torch torchvision tqdm opencv-python fastapi uvicorn pillow
+
 2. Prepare the data
+
 Place the following files inside the data/ folder:
 
 sar_vv_vh.tif
@@ -56,40 +62,52 @@ delhi_temporal_vv_vh.tif
 mumbai_vv_vh.tif
 mumbai_mask.tif
 mumbai_temporal_vv_vh.tif
+
 3. Run training
+
 Train Random Forest:
 
 python -u src/train_random_forest.py
+
 Train UNet:
 
 python -u src/create_patches.py
 python -u src/train_unet.py
+
 Run UNet inference:
 
 python -u src/infer_unet_full.py
+
 Train Temporal UNet:
 
 python -u src/create_temporal_patches.py
 python -u src/train_temporal_unet.py
 python -u src/infer_temporal_unet_full.py
+
 4. Run Mumbai testing
+
 python -u src/test_rf_mumbai.py
 python -u src/test_unet_mumbai.py
 python -u src/test_temporal_unet_mumbai.py
 python -u src/create_mumbai_comparison.py
+
 5. Generate final outputs
 python -u src/create_final_comparison.py
 python -u src/create_map_overlays.py
+
 6. Start backend
 python -m uvicorn backend.main:app --reload
 Backend will run at:
 
 http://127.0.0.1:8000
+
 7. Start frontend
 Open in browser:
 
 frontend/index.html
+
 8. Trigger sample inference
+
 Select Delhi or Mumbai
 
 Click Run Inference
@@ -99,3 +117,6 @@ Click Final Comparison
 Click Show Metrics
 
 Click Show Map Overlay
+
+
+The current implementation uses simple script-based configuration. Paths and parameters can be easily adapted or extended using CLI arguments or config files
