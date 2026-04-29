@@ -32,30 +32,70 @@ Basic preprocessing steps were applied to prepare the data for machine learning.
 
 These preprocessing steps ensured that the data was consistent, normalized, and structured appropriately for both classical machine learning and deep learning pipelines.
 
-Setup and Running Instructions
-To run this project locally, first clone the repository and open the project folder in VS Code. Create a Python virtual environment from the project root using the following command:
+## Basic Instructions
+
+### 1. Set up the environment
+
+- Clone the repository and open the project folder in VS Code
+- Create a virtual environment:
+
+```bash
 python -m venv .venv
-Activate the environment on Windows:
+Activate the environment (Windows):
+
 .\.venv\Scripts\Activate.ps1
-Install the required packages:
+Install required packages:
+
 python -m pip install rasterio numpy matplotlib scikit-learn joblib torch torchvision tqdm opencv-python fastapi uvicorn pillow
-The project expects the required SAR image files and masks to be placed inside the data/ folder. These files are not included in the GitHub repository because they are large. The main expected files are sar_vv_vh.tif, water_mask.tif, delhi_temporal_vv_vh.tif, mumbai_vv_vh.tif, mumbai_mask.tif, and mumbai_temporal_vv_vh.tif.
-To train the Random Forest baseline, run:
+2. Prepare the data
+Place the following files inside the data/ folder:
+
+sar_vv_vh.tif
+water_mask.tif
+delhi_temporal_vv_vh.tif
+mumbai_vv_vh.tif
+mumbai_mask.tif
+mumbai_temporal_vv_vh.tif
+3. Run training
+Train Random Forest:
+
 python -u src/train_random_forest.py
-To create patches for the UNet model and train it, run:
-python -u src/create_patches.pypython -u src/train_unet.py
-To run full-image inference using the UNet model, run:
+Train UNet:
+
+python -u src/create_patches.py
+python -u src/train_unet.py
+Run UNet inference:
+
 python -u src/infer_unet_full.py
-To train the temporal UNet model, run:
-python -u src/create_temporal_patches.pypython -u src/train_temporal_unet.pypython -u src/infer_temporal_unet_full.py
-To test the Delhi-trained models on Mumbai, run:
-python -u src/test_rf_mumbai.pypython -u src/test_unet_mumbai.pypython -u src/test_temporal_unet_mumbai.pypython -u src/create_mumbai_comparison.py
-To generate comparison images and map overlays, run:
-python -u src/create_final_comparison.pypython -u src/create_map_overlays.py
-To start the backend, run:
+Train Temporal UNet:
+
+python -u src/create_temporal_patches.py
+python -u src/train_temporal_unet.py
+python -u src/infer_temporal_unet_full.py
+4. Run Mumbai testing
+python -u src/test_rf_mumbai.py
+python -u src/test_unet_mumbai.py
+python -u src/test_temporal_unet_mumbai.py
+python -u src/create_mumbai_comparison.py
+5. Generate final outputs
+python -u src/create_final_comparison.py
+python -u src/create_map_overlays.py
+6. Start backend
 python -m uvicorn backend.main:app --reload
-The backend will start at:
+Backend will run at:
+
 http://127.0.0.1:8000
-To start the frontend, open the following file in a browser:
+7. Start frontend
+Open in browser:
+
 frontend/index.html
-In the web dashboard, select either Delhi or Mumbai from the dropdown. Click “Run Inference” to view the model output, “Final Comparison” to compare model predictions, “Show Metrics” to view F1 and IoU values, and “Show Map Overlay” to display the predicted water regions on the map.
+8. Trigger sample inference
+Select Delhi or Mumbai
+
+Click Run Inference
+
+Click Final Comparison
+
+Click Show Metrics
+
+Click Show Map Overlay
