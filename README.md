@@ -38,85 +38,86 @@ These preprocessing steps ensured that the data was consistent, normalized, and 
 
 ## Basic Instructions
 
-### 1. Set up the environment
+1. Set up the environment
 
 - Clone the repository and open the project folder in VS Code
 - Create a virtual environment:
 
-python -m venv .venv
-Activate the environment (Windows):
+    python -m venv .venv
 
-.\.venv\Scripts\Activate.ps1
+    Activate the environment (Windows):
 
-Install required packages:
+    .\.venv\Scripts\Activate.ps1
 
-python -m pip install rasterio numpy matplotlib scikit-learn joblib torch torchvision tqdm opencv-python fastapi uvicorn pillow
+    Install required packages:
+
+    python -m pip install rasterio numpy matplotlib scikit-learn joblib torch torchvision tqdm opencv-python fastapi uvicorn pillow
 
 2. Prepare the data
 
-Place the following files inside the data/ folder:
+    Place the following files inside the data/ folder:
 
-sar_vv_vh.tif
-water_mask.tif
-delhi_temporal_vv_vh.tif
-mumbai_vv_vh.tif
-mumbai_mask.tif
-mumbai_temporal_vv_vh.tif
+    sar_vv_vh.tif
+    water_mask.tif
+    delhi_temporal_vv_vh.tif
+    mumbai_vv_vh.tif
+    mumbai_mask.tif
+    mumbai_temporal_vv_vh.tif
 
 3. Run training
 
-Train Random Forest:
+    Train Random Forest:
 
-python -u src/train_random_forest.py
+    python -u src/train_random_forest.py
 
-Train UNet:
+    Train UNet:
 
-python -u src/create_patches.py
-python -u src/train_unet.py
+    python -u src/create_patches.py
+    python -u src/train_unet.py
 
-Run UNet inference:
+    Run UNet inference:
 
-python -u src/infer_unet_full.py
+    python -u src/infer_unet_full.py
 
-Train Temporal UNet:
+    rain Temporal UNet:
 
-python -u src/create_temporal_patches.py
-python -u src/train_temporal_unet.py
-python -u src/infer_temporal_unet_full.py
+    python -u src/create_temporal_patches.py
+    python -u src/train_temporal_unet.py
+    python -u src/infer_temporal_unet_full.py
 
 4. Run Mumbai testing
 
-python -u src/test_rf_mumbai.py
-python -u src/test_unet_mumbai.py
-python -u src/test_temporal_unet_mumbai.py
-python -u src/create_mumbai_comparison.py
+    python -u src/test_rf_mumbai.py
+    python -u src/test_unet_mumbai.py
+    python -u src/test_temporal_unet_mumbai.py
+    python -u src/create_mumbai_comparison.py
 
 5. Generate final outputs
-python -u src/create_final_comparison.py
-python -u src/create_map_overlays.py
+    python -u src/create_final_comparison.py
+    python -u src/create_map_overlays.py
 
 6. Start backend
-python -m uvicorn backend.main:app --reload
-Backend will run at:
+    python -m uvicorn backend.main:app --reload
+    Backend will run at:
 
-http://127.0.0.1:8000
+    http://127.0.0.1:8000
 
 7. Start frontend
-Open in browser:
+    Open in browser:
 
-frontend/index.html
+    frontend/index.html
 
 8. Trigger sample inference
 
-Select Delhi or Mumbai
+    Select Delhi or Mumbai
 
-Click Run Inference
+    Click Run Inference
 
-Click Final Comparison
+    Click Final Comparison
 
-Click Show Metrics
+    Click Show Metrics
 
-Click Show Map Overlay
+    Click Show Map Overlay
 
 
 The current implementation uses simple script-based configuration. Paths and parameters can be easily adapted or extended using CLI arguments or config files
