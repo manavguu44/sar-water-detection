@@ -36,6 +36,13 @@ Basic preprocessing steps were applied to prepare the data for machine learning.
 
 These preprocessing steps ensured that the data was consistent, normalized, and structured appropriately for both classical machine learning and deep learning pipelines.
 
+The app screenshot - ( for mumbai aoi) 
+![alt text](image.png)
+
+for Delhi - 
+
+![alt text](image-1.png)
+
 ## Basic Instructions
 
 1. Set up the environment
