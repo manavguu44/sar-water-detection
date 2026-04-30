@@ -36,12 +36,19 @@ Basic preprocessing steps were applied to prepare the data for machine learning.
 
 These preprocessing steps ensured that the data was consistent, normalized, and structured appropriately for both classical machine learning and deep learning pipelines.
 
-The app screenshot - ( for mumbai aoi) 
-![alt text](image.png)
+## App Screenshots
 
-for Delhi - 
+### Mumbai AOI
 
-![alt text](image-1.png)
+![Mumbai AOI app screenshot](images/mumbai_app.png)
+
+The Mumbai results provide a more realistic evaluation of model performance, as the models were trained on Delhi but tested on a completely different geographic region. Mumbai presents additional challenges due to its coastal environment, large water bodies such as the Arabian Sea, and different urban structure. Despite these differences, all models are able to detect major water regions, particularly the coastline and large water bodies. The Random Forest model again shows strong numerical performance, which is consistent with the fact that it relies on backscatter intensity thresholds that generalize reasonably well across regions. The UNet model produces a smoother and more spatially coherent segmentation compared to Random Forest. It is better at capturing continuous water regions such as coastlines, although the improvement over Random Forest is still limited due to the nature of the training labels. The Temporal UNet model shows only marginal differences compared to the standard UNet model. This suggests that, in the absence of temporally varying labels, the model is not able to fully leverage the additional temporal information provided in the input. A key observation from the Mumbai results is that performance, while still high, reflects the limitations of generalization across regions with different SAR characteristics. Differences in surface properties, coastline structures, and urban density introduce a domain shift that impacts model predictions.
+
+### Delhi AOI
+
+![Delhi AOI app screenshot](images/delhi_app.png)
+
+The Delhi results represent model performance on the same region used for training. The SAR image shows clear river structures and urban regions, and all models are able to detect the major water bodies effectively. The Random Forest model performs extremely well in terms of numerical metrics, achieving very high F1 and IoU scores. This is expected because the ground truth labels were generated using a simple threshold on SAR backscatter values, and Random Forest operates at the pixel level, effectively learning the same thresholding rule. The UNet model, trained using both VV and VH polarization channels, produces a segmentation that is visually very similar to the Random Forest output. While UNet is capable of learning spatial patterns, its advantage is not fully realized here because the labels themselves are based on a simple pixel-wise rule rather than complex spatial structures. The Temporal UNet model, which incorporates multiple SAR images across different dates, also produces results that are very similar to the other models. This indicates that temporal information is not contributing significantly in this case, primarily because the labels do not reflect temporal changes such as flooding or seasonal variation. Overall, the Delhi results show that all models perform well, but the high performance is largely due to the simplicity of the labeling strategy and the fact that training and evaluation data come from the same spatial region.
 
 ## Basic Instructions
 
